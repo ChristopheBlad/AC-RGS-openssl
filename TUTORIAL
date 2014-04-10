@@ -1,0 +1,94 @@
+Génération de l'AC racine
+-------------------------
+Avant de créer les certificats, il faut créer les répertoires:
+mkdir ACracine
+mkdir ACracine/certs
+mkdir ACracine/crl
+mkdir ACracine/private
+
+echo 01 > ACracine/serial
+Sous windows: 
+	copy con serial.txt
+	01
+	^Z
+	to achieve the desired effect. (That's keystrokes zero, one, return, control-Z, return)
+
+touch ACracine/index.txt
+
+echo 01 > ACracine/crlnumber
+Sous windows: 
+	copy con crlnumber
+	01
+	^Z
+
+	to achieve the desired effect. (That's keystrokes zero, one, return, control-Z, return)
+
+Génération de la clé et de l'AC racine autosignée
+openssl req -new -x509 -config OpenSSLconfigurationRGS.conf -extensions v3_ca_ext_racine -days 3650 -keyout ACracine/private/ACracine.key -out ACracine/ACracineCERT.pem 
+
+Générer la CRL
+openssl ca -gencrl -config OpenSSLconfigurationRGS.conf -name AC_racine -out ACracine/ACracineCRL.pem
+
+
+***********************************************************
+Génération d'une AC fille
+-------------------------
+
+mkdir ACauthentification
+mkdir ACauthentification/certs
+mkdir ACauthentification/crl
+mkdir ACauthentification/private
+echo 01 > ACauthentification/serial
+touch ACauthentification/index.txt
+echo 01 > ACauthentification/crlnumber
+Sous windows: 
+	copy con ACauthentification/crlnumber
+	01
+	^Z
+
+	to achieve the desired effect. (That's keystrokes zero, one, return, control-Z, return)
+
+Générer la clé privée de l'AC authentification
+openssl genrsa -aes256 -out ACauthentification/private/ACauthentification.key 4096
+
+Générer la requête de certificat pour l'AC authentification
+openssl req -new -config OpenSSLconfigurationRGS.conf -key ACauthentification/private/ACauthentification.key -out ACauthentification/ACauthentification.csr
+Pour vérifier le contenu de la requête:
+openssl req -text -in ACauthentification/ACauthentification.csr
+
+Générer le certificat de l'AC authentification
+openssl ca -config OpenSSLconfigurationRGS.conf -name AC_racine -in ACauthentification/ACauthentification.csr -out ACauthentification/ACauthentificationCERT.pem
+
+Pour vérifier le contenu ASN.1 du certificat:
+openssl asn1parse -in certificat.crt
+
+Générer la CRL
+openssl ca -gencrl -config OpenSSLconfigurationRGS.conf -name AC_racine -out ACracine/ACracineCRL.pem
+
+
+**********************************************************
+Générer un certificat porteur
+-----------------------------
+
+openssl genrsa -out toto.key 2048 (Attention clé privée sans mot de passe)
+openssl req -new -config OpenSSLconfigurationRGS.conf -key toto.key -out toto.csr
+openssl ca -config OpenSSLconfigurationRGS.conf -name AC_authentification -in toto.csr -out totoCERT.pem
+
+Afficher le certificat porteur
+openssl x509 -text -in totoCERT.pem
+
+Conversion du certificat du format pem au format DER (.crt)
+openssl x509 -in totoCERT.pem -outform DER -out totoCERT.crt
+
+Génération d'un fichier p12 contenant le certificat et la clé privée (un mot de passe de protection du fichier sera demandé)
+openssl pkcs12 -export -inkey toto.key -in totoCERT.pem -out totoCERT.p12
+Vérifier le contenu du p12
+openssl pkcs12 -info -in totoCERT.p12
+
+**********************************************************
+idem pour autres AC
+	AC_authentification
+	AC_authentification_serveur_serveur
+	AC_authentification_serveur_client
+	AC_signature
+	AC_cachet
