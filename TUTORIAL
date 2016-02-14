@@ -63,7 +63,7 @@ Pour vérifier le contenu ASN.1 du certificat:
 openssl asn1parse -in certificat.crt
 
 Générer la CRL
-openssl ca -gencrl -config OpenSSLconfigurationRGS.conf -name AC_racine -out ACracine/ACracineCRL.pem
+openssl ca -gencrl -config OpenSSLconfigurationRGS.conf -name AC_racine -out ACracine/crl/ACracineCRL.pem
 
 
 **********************************************************
@@ -84,6 +84,9 @@ Génération d'un fichier p12 contenant le certificat et la clé privée (un mot de 
 openssl pkcs12 -export -inkey toto.key -in totoCERT.pem -out totoCERT.p12
 Vérifier le contenu du p12
 openssl pkcs12 -info -in totoCERT.p12
+
+Générer la CRL
+openssl ca -gencrl -config OpenSSLconfigurationRGS.conf -name AC_authentification -out ACauthentification/crl/ACauthentificationCRL.pem
 
 **********************************************************
 idem pour autres AC
